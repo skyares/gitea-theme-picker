@@ -64,6 +64,16 @@ theme-auto.css                      → 🏠 Gitea 基础 / 自动
 | **skyares** | 原作者 / 维护者 |
 | **DeepSeek** | AI 协作开发（架构设计、主题识别逻辑、`@import` 解析、拖拽目录处理、帮助文档撰写） |
 
+## 🙏 鸣谢
+
+开发过程中的主题加载、分组识别与预览验证，参考并实测了以下优秀的 Gitea 主题库，感谢它们的作者：
+
+- **[catppuccin/gitea](https://github.com/catppuccin/gitea)** —— 🍨 柔和马卡龙配色的 Gitea 主题（Latte / Frappé / Macchiato / Mocha 四种风味）
+- **[lutinglt/gitea-github-theme](https://github.com/lutinglt/gitea-github-theme)** —— 追求 GitHub 风格细节的 Gitea 主题（含色盲/高对比/粉色等完整变体族）
+- **[lucas-labs/gitea-lugit-theme](https://github.com/lucas-labs/gitea-lugit-theme)** —— LuGit 主题
+
+本工具为独立的预览器项目，不包含上述主题的任何代码或样式文件；主题文件的版权归各自作者所有。
+
 ## 📜 开源许可
 
 [MIT License](./LICENSE) —— 可自由使用、修改、分发、商用，唯一要求保留原始版权声明。
