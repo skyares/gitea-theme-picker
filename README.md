@@ -4,6 +4,12 @@
 
 一个用于预览和对比 Gitea 主题的纯前端工具——**纯静态 HTML · 无后端 · 无网络请求 · 无数据上传**。
 
+English below | 一个纯前端单文件工具：加载本地 Gitea 主题 CSS 文件，实时预览、对比与调色。
+
+## 📸 截图
+
+![Gitea 主题预览器界面](docs/screenshot-hero.png)
+
 ## ✨ 特性
 
 - **多种加载方式**：选择 CSS 文件 / 选择文件夹 / 直接拖拽（支持整个目录递归遍历，WebkitEntry API）
@@ -67,3 +73,18 @@ theme-auto.css                      → 🏠 Gitea 基础 / 自动
 ---
 
 Made with 🎨 by skyares & DeepSeek · MIT License · 2026
+
+## 🇬🇧 English
+
+**gitea-theme-picker** — a single-file, zero-dependency, purely front-end theme previewer for [Gitea](https://gitea.com).
+
+Load your local Gitea theme CSS files (via file picker, folder picker or drag & drop), and instantly preview them on a Gitea-style UI mock: navbar, buttons, forms, labels, cards, code highlighting, diffs, messages, primary color scale (`light`/`dark`/`alpha`), derived-color usage demos and a full palette.
+
+- **No server, no build, no network requests, no data upload** — everything stays in your browser
+- Auto-groups themes by series (GitHub / Catppuccin / Tokyo Night / Dracula / Nord …) with Chinese display names
+- Resolves `@import` dependencies (same directory first)
+- Built-in help panel with customization guide (add series, flavors, tint keywords …)
+
+Usage: just open `gitea-theme-picker.html` in your browser. Works with standard Gitea CSS variables (`--color-body`, `--color-primary`, `--color-nav-bg`, …).
+
+**Keywords**: gitea theme, gitea 主题, gitea css theme previewer, gitea custom theme, gitea theme tester, catppuccin gitea, 自托管 Git 主题预览
