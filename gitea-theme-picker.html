@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gitea 主题预览器</title>
+
+<style>
+:root{
+  --color-body:#1e1e2e; --color-text:#cdd6f4; --color-text-light:#bac2de;
+  --color-text-dark:#a6adc8; --color-light-border:#45475a;
+  --color-navbar: var(--color-nav-bg, #181825);
+  --color-card:#313244; --color-box-header:#313244; --color-button:#313244;
+  --color-primary:#cba6f7; --color-primary-contrast:#1e1e2e; --color-primary-hover:#b4befe;
+  --color-hover:rgba(255,255,255,.06); --color-active:rgba(255,255,255,.1);
+  --color-input-background:#313244; --color-input-text:#cdd6f4;
+  --color-input-border:#45475a; --color-input-border-hover:#585b70;
+  --color-placeholder-text:#7f849c; --color-code-bg:#11111b; --color-markup-code-inline:#313244;
+  --color-diff-removed-row-bg:rgba(243,139,168,.1);
+  --color-diff-added-row-bg:rgba(166,227,161,.1);
+  --color-diff-moved-row-bg:rgba(249,226,175,.1);
+  --color-red:#f38ba8; --color-green:#a6e3a1; --color-yellow:#f9e2af;
+  --color-blue:#89b4fa; --color-purple:#cba6f7; --color-teal:#94e2d5;
+  --color-pink:#f5c2e7; --color-orange:#fab387; --color-violet:#b4befe;
+  --color-grey:#7f849c; --color-black:#11111b; --color-gold:#f9e2af; --color-white:#cdd6f4;
+  --color-success-bg:#a6e3a1; --color-warning-bg:#f9e2af; --color-error-bg:#f38ba8;
+  --color-success-text:#1e1e2e; --color-warning-text:#1e1e2e; --color-error-text:#1e1e2e;
+  --color-primary-alpha-30:rgba(203,166,247,.3);
+  /* ★ 派生色兜底（无主题时预览页仍有完整色阶） */
+  --color-primary-light-1:rgba(203,166,247,.95);
+  --color-primary-light-2:rgba(203,166,247,.9);
+  --color-primary-light-3:rgba(203,166,247,.85);
+  --color-primary-light-4:rgba(203,166,247,.8);
+  --color-primary-light-5:rgba(203,166,247,.75);
+  --color-primary-light-6:rgba(203,166,247,.7);
+  --color-primary-light-7:rgba(203,166,247,.65);
+  --color-primary-dark-1:rgba(180,140,230,1);
+  --color-primary-dark-2:rgba(160,120,210,1);
+  --color-primary-dark-3:rgba(140,100,190,1);
+  --color-primary-dark-4:rgba(120,80,170,1);
+  --color-primary-dark-5:rgba(100,60,150,1);
+  --color-primary-dark-6:rgba(80,40,130,1);
+  --color-primary-dark-7:rgba(60,20,110,1);
+  --color-primary-alpha-10:rgba(203,166,247,.1);
+  --color-primary-alpha-20:rgba(203,166,247,.2);
+  --color-primary-alpha-40:rgba(203,166,247,.4);
+  --color-primary-alpha-50:rgba(203,166,247,.5);
+  --color-primary-alpha-60:rgba(203,166,247,.6);
+  --color-primary-alpha-70:rgba(203,166,247,.7);
+  --color-primary-alpha-80:rgba(203,166,247,.8);
+  --color-primary-alpha-90:rgba(203,166,247,.9);
+}
+</style>
+<link id="theme-link" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-body);color:var(--color-text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:14px;line-height:1.6;transition:background .18s,color .18s}
+a{color:var(--color-primary);text-decoration:none}
+a:hover{text-decoration:underline}
+select,button,input,textarea{font-family:inherit}
+
+/* ── 工具条 ── */
+.toolbar{position:sticky;top:0;z-index:99;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  padding:10px 16px;background:var(--color-navbar);border-bottom:1px solid var(--color-light-border)}
+.toolbar .brand{font-weight:700;font-size:14px;white-space:nowrap}
+.toolbar select{font-size:13px;padding:5px 10px;min-width:340px;max-width:540px;cursor:pointer;
+  background:var(--color-input-background);color:var(--color-input-text);
+  border:1px solid var(--color-input-border);border-radius:6px;outline:none}
+.toolbar select:hover{border-color:var(--color-input-border-hover)}
+.toolbar select:disabled{opacity:.5;cursor:not-allowed}
+.theme-count{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;
+  background:var(--color-card);color:var(--color-primary);border:1px solid var(--color-primary);white-space:nowrap}
+.theme-count.empty{background:transparent;color:var(--color-text-dark);border-color:var(--color-light-border)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:5px 12px;border-radius:6px;cursor:pointer;
+  border:1px solid var(--color-light-border);background:var(--color-button);color:var(--color-text);
+  transition:background .12s,border-color .12s}
+.btn:hover{background:var(--color-hover)}
+.btn-primary{background:var(--color-primary);border-color:var(--color-primary);
+  color:var(--color-primary-contrast);font-weight:600}
+.btn-primary:hover{background:var(--color-primary-hover);border-color:var(--color-primary-hover)}
+.btn-danger{background:transparent;border-color:var(--color-red);color:var(--color-red)}
+.btn-danger:hover{background:var(--color-diff-removed-row-bg)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── 拖拽遮罩 ── */
+.drop-veil{position:fixed;inset:0;z-index:999;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.55);border:3px dashed var(--color-primary);border-radius:14px;
+  opacity:0;transition:opacity .15s}
+body.dragging .drop-veil{opacity:1}
+.drop-veil div{font-size:20px;font-weight:700;color:var(--color-primary);
+  background:var(--color-card);padding:22px 38px;border-radius:12px}
+
+/* ── 帮助面板 ── */
+.help-veil{position:fixed;inset:0;z-index:900;display:none;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;padding:24px}
+.help-veil.open{display:flex}
+.help-panel{
+  width:min(920px,100%);max-height:88vh;
+  background:var(--color-card);
+  border:1px solid var(--color-light-border);
+  border-radius:12px;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  animation:helpIn .18s cubic-bezier(.33,1,.68,1)
+}
+@keyframes helpIn{from{transform:translateY(-16px);opacity:0}to{transform:none;opacity:1}}
+.help-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--color-light-border);
+  background:var(--color-box-header);
+  font-weight:600;font-size:15px;
+}
+.help-close{
+  background:transparent;border:0;color:var(--color-text-dark);
+  font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;
+}
+.help-close:hover{background:var(--color-hover);color:var(--color-text)}
+
+.help-body{
+  padding:20px 24px 28px;overflow-y:auto;font-size:13.5px;
+  color:var(--color-text-light);
+}
+.help-body h3{
+  font-size:14px;color:var(--color-text);font-weight:600;
+  margin:26px 0 10px;padding-bottom:6px;
+  border-bottom:1px solid var(--color-light-border);
+}
+.help-body h3:first-child{margin-top:0}
+.help-body h4{
+  font-size:13px;color:var(--color-text);font-weight:600;
+  margin:16px 0 6px;
+}
+.help-body p{margin:6px 0}
+.help-body strong{color:var(--color-text)}
+.help-body ul,.help-body ol{margin:6px 0 6px 22px;padding:0}
+.help-body li{margin:4px 0}
+.help-body code{
+  background:var(--color-markup-code-inline);
+  padding:1px 6px;border-radius:4px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:12px;color:var(--color-text);
+}
+.help-body pre{
+  background:var(--color-code-bg);
+  border:1px solid var(--color-light-border);
+  border-radius:6px;padding:12px 14px;
+  overflow-x:auto;margin:8px 0;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12px;line-height:1.7;color:var(--color-text);
+}
+.help-body table{
+  width:100%;border-collapse:collapse;margin:8px 0;
+  font-size:12.5px;
+}
+.help-body th,.help-body td{
+  border:1px solid var(--color-light-border);
+  padding:6px 10px;text-align:left;
+}
+.help-body th{
+  background:var(--color-box-header);
+  color:var(--color-text);font-weight:600;
+}
+.help-body td code{font-size:11.5px}
+
+details{
+  margin:8px 0;border:1px solid var(--color-light-border);
+  border-radius:6px;overflow:hidden;background:var(--color-box-header);
+}
+details summary{
+  padding:8px 14px;cursor:pointer;font-weight:600;
+  color:var(--color-text);font-size:13px;
+  list-style:none;user-select:none;
+  display:flex;align-items:center;gap:6px;
+}
+details summary::before{
+  content:"▸";transition:transform .15s;
+  display:inline-block;color:var(--color-primary);
+}
+details[open] summary::before{transform:rotate(90deg)}
+details summary::-webkit-details-marker{display:none}
+details > div{padding:10px 16px 14px;border-top:1px solid var(--color-light-border);
+  background:var(--color-card);font-size:13px}
+
+.kbd{
+  display:inline-block;padding:1px 6px;
+  border:1px solid var(--color-light-border);
+  border-bottom-width:2px;border-radius:4px;
+  font-family:ui-monospace,Menlo,monospace;font-size:11px;
+  background:var(--color-body);color:var(--color-text);
+}
+.tag{
+  display:inline-block;font-size:11px;font-weight:600;
+  padding:1px 7px;border-radius:999px;
+  background:var(--color-primary-alpha-30);
+  color:var(--color-primary);margin-left:4px;
+}
+
+/* ── 关于面板 ── */
+.about-head{
+  text-align:center;
+  padding:12px 0 18px;
+  margin-bottom:10px;
+  border-bottom:1px dashed var(--color-light-border);
+}
+.about-head .logo{
+  font-size:34px;
+  line-height:1;
+  margin-bottom:10px;
+}
+.about-head .title{
+  font-size:17px;
+  font-weight:700;
+  color:var(--color-text);
+  margin:0 0 6px;
+}
+.about-head .subtitle{
+  font-size:13px;
+  color:var(--color-text-light);
+  margin:0;
+}
+.about-head .meta{
+  font-size:11.5px;
+  color:var(--color-text-dark);
+  font-family:ui-monospace,Menlo,monospace;
+  margin-top:10px;
+  line-height:1.7;
+}
+.about-note{
+  font-size:12.5px;
+  color:var(--color-text-light);
+  padding:10px 14px;
+  background:var(--color-box-header);
+  border-left:3px solid var(--color-primary);
+  border-radius:4px;
+  margin:10px 0;
+}
+.about-note strong{color:var(--color-text)}
+.about-person{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 12px;
+  background:var(--color-box-header);
+  border:1px solid var(--color-light-border);
+  border-radius:6px;
+  margin:6px 0;
+  font-size:13px;
+}
+.about-person .avatar{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  background:var(--color-primary-alpha-30);
+  color:var(--color-primary);
+  font-weight:700;
+  font-size:13px;
+  flex:none;
+}
+.about-person .role{
+  color:var(--color-text-dark);
+  font-size:12px;
+  margin-left:auto;
+  font-family:ui-monospace,Menlo,monospace;
+}
+
+/* ── 正文 ── */
+.wrap{max-width:1080px;margin:0 auto;padding:24px 16px 90px}
+h2{font-size:15px;font-weight:600;margin:34px 0 14px;padding-bottom:6px;
+   border-bottom:1px solid var(--color-light-border)}
+h2:first-child{margin-top:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.navbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  background:var(--color-navbar);border:1px solid var(--color-light-border);
+  border-radius:6px;padding:6px 10px;margin-bottom:16px}
+.navbar a{padding:5px 10px;border-radius:4px;color:var(--color-text);font-size:13px}
+.navbar a:hover{background:var(--color-hover);text-decoration:none}
+.navbar a.on{background:var(--color-active);color:var(--color-primary);font-weight:500}
+input[type=text],textarea,select.field{font-size:13px;background:var(--color-input-background);color:var(--color-input-text);
+  border:1px solid var(--color-input-border);border-radius:6px;padding:6px 10px;outline:none;width:100%}
+input:focus,textarea:focus,select.field:focus{border-color:var(--color-primary);
+  box-shadow:0 0 0 3px var(--color-primary-alpha-30)}
+input::placeholder,textarea::placeholder{color:var(--color-placeholder-text)}
+label{font-size:12px;color:var(--color-text-dark);display:block;margin-bottom:3px}
+.label{display:inline-block;font-size:12px;font-weight:500;padding:1px 9px;
+  border-radius:999px;color:var(--color-primary-contrast);background:var(--color-primary)}
+.label.red{background:var(--color-red)}
+.label.green{background:var(--color-green)}
+.label.yellow{background:var(--color-yellow)}
+.label.blue{background:var(--color-blue)}
+.label.purple{background:var(--color-purple)}
+.label.teal{background:var(--color-teal)}
+.label.pink{background:var(--color-pink)}
+.label.orange{background:var(--color-orange)}
+.label.outline{background:transparent;border:1px solid var(--color-light-border);color:var(--color-text-light)}
+.badge{display:inline-block;min-width:20px;text-align:center;font-size:11px;font-weight:700;
+  padding:1px 6px;border-radius:999px;color:var(--color-red);
+  background:var(--color-navbar);border:1px solid var(--color-red)}
+.card{background:var(--color-card);border:1px solid var(--color-light-border);border-radius:6px;overflow:hidden}
+.card-h{padding:9px 14px;background:var(--color-box-header);
+  border-bottom:1px solid var(--color-light-border);font-weight:600;font-size:13px;
+  display:flex;align-items:center;gap:8px}
+.card-b{padding:14px;font-size:13px;color:var(--color-text-light)}
+.card-b strong{color:var(--color-text)}
+pre.code{margin:0;background:var(--color-code-bg);border:1px solid var(--color-light-border);
+  border-radius:6px;padding:14px 16px;overflow-x:auto;
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  font-size:12.5px;line-height:1.75}
+code.inline{background:var(--color-markup-code-inline);padding:2px 6px;border-radius:4px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--color-text)}
+.diff{border:1px solid var(--color-light-border);border-radius:6px;overflow:hidden;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+.diff div{padding:2px 12px;white-space:pre}
+.diff .del{background:var(--color-diff-removed-row-bg);color:var(--color-red)}
+.diff .add{background:var(--color-diff-added-row-bg);color:var(--color-green)}
+.diff .mv{background:var(--color-diff-moved-row-bg);color:var(--color-yellow)}
+.diff .ctx{color:var(--color-text-light)}
+.msg{padding:10px 14px;border-radius:6px;border:1px solid;font-size:13px;margin-bottom:8px}
+.msg.tip{background:var(--color-diff-added-row-bg);border-color:var(--color-success-bg);color:var(--color-green)}
+.msg.warn{background:var(--color-diff-moved-row-bg);border-color:var(--color-warning-bg);color:var(--color-yellow)}
+.msg.err{background:var(--color-diff-removed-row-bg);border-color:var(--color-error-bg);color:var(--color-red)}
+.swatch{border-radius:6px;border:1px solid var(--color-light-border);overflow:hidden}
+.swatch .chip{height:40px}
+.swatch .name{font-size:11px;padding:4px 8px;background:var(--color-card);
+  color:var(--color-text-dark);font-family:ui-monospace,Menlo,monospace}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+  background:var(--color-card);border:1px solid var(--color-light-border);
+  color:var(--color-text);padding:9px 18px;border-radius:8px;font-size:13px;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:1000;
+  box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* =========================================================
+   ★ 新增：主色阶展示
+   ========================================================= */
+.scale-grid{
+  display:grid;
+  grid-template-columns:repeat(15,1fr);
+  gap:4px;
+  margin:10px 0;
+}
+@media (max-width:820px){
+  .scale-grid{grid-template-columns:repeat(7,1fr);}
+}
+.scale-grid.cols-7{grid-template-columns:repeat(7,1fr)}
+.scale-grid.cols-9{grid-template-columns:repeat(9,1fr)}
+.scale-cell{
+  border-radius:4px;
+  overflow:hidden;
+  border:1px solid var(--color-light-border);
+  background:var(--color-body);
+}
+.scale-cell .bar{
+  height:38px;
+  position:relative;
+}
+.scale-cell .lbl{
+  font-size:9.5px;
+  text-align:center;
+  padding:3px 2px;
+  background:var(--color-card);
+  color:var(--color-text-dark);
+  font-family:ui-monospace,Menlo,monospace;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.scale-row-label{
+  font-size:11px;
+  color:var(--color-text-dark);
+  margin:12px 0 4px;
+  font-family:ui-monospace,Menlo,monospace;
+}
+
+/* =========================================================
+   ★ 新增：派生色实际用途示例
+   ========================================================= */
+.usage-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:12px;
+}
+.usage-card{
+  border:1px solid var(--color-light-border);
+  border-radius:6px;
+  padding:14px;
+  background:var(--color-card);
+  font-size:12.5px;
+}
+.usage-card .usage-title{
+  font-weight:600;
+  color:var(--color-text);
+  margin-bottom:10px;
+  font-size:12.5px;
+}
+.usage-card .usage-demo{
+  margin:8px 0;
+  min-height:32px;
+}
+.usage-card .usage-var{
+  font-family:ui-monospace,Menlo,monospace;
+  font-size:11px;
+  color:var(--color-text-dark);
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px dashed var(--color-light-border);
+  line-height:1.7;
+  word-break:break-all;
+}
+
+/* ① 淡色徽章 */
+.demo-badge-soft{
+  display:inline-block;
+  padding:2px 10px;
+  margin:2px 4px 2px 0;
+  border-radius:999px;
+  background:var(--color-primary-alpha-30);
+  color:var(--color-primary);
+  font-size:12px;
+  font-weight:500;
+  border:1px solid var(--color-primary-alpha-60);
+}
+
+/* ② 聚焦输入框 */
+.demo-focus{
+  width:100%;
+  padding:6px 10px;
+  border:1px solid var(--color-primary);
+  border-radius:6px;
+  background:var(--color-body);
+  color:var(--color-text);
+  box-shadow:0 0 0 3px var(--color-primary-alpha-30);
+  outline:none;
+  font-size:13px;
+}
+
+/* ③ 选中列表项 */
+.demo-list{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.demo-list .demo-item{
+  padding:6px 10px;
+  border-radius:4px;
+  font-size:12.5px;
+  color:var(--color-text-light);
+}
+.demo-list .demo-item.active{
+  background:var(--color-primary-alpha-10);
+  color:var(--color-text);
+  border-left:3px solid var(--color-primary);
+  padding-left:7px;
+}
+
+/* ④ 按钮三态 */
+.demo-btn-row{
+  display:flex;flex-wrap:wrap;gap:6px;
+}
+.demo-btn{
+  padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:default;
+  border:1px solid transparent;
+}
+.demo-btn-light1{ background:var(--color-primary-light-2); color:var(--color-primary-dark-7); }
+.demo-btn-base  { background:var(--color-primary);         color:var(--color-primary-contrast); }
+.demo-btn-dark2 { background:var(--color-primary-dark-2);  color:var(--color-primary-contrast); }
+
+/* ⑤ 引用块 */
+.demo-quote{
+  border-left:3px solid var(--color-primary-light-1);
+  padding:6px 12px;
+  background:var(--color-primary-alpha-10);
+  border-radius:0 4px 4px 0;
+  color:var(--color-text-light);
+  font-size:12.5px;
+}
+
+/* 变量速览表 */
+.var-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12.5px;
+}
+.var-table td{
+  padding:6px 10px;
+  border-bottom:1px solid var(--color-light-border);
+}
+.var-table td.vn{
+  width:230px;
+  font-family:ui-monospace,Menlo,monospace;
+  color:var(--color-text-dark);
+}
+.var-table td.vs{
+  width:46px;
+}
+.var-table td.vv{
+  font-family:ui-monospace,Menlo,monospace;
+  color:var(--color-text-light);
+  font-size:11.5px;
+}
+.var-chip{
+  display:inline-block;
+  width:28px;height:16px;
+  border-radius:3px;
+  border:1px solid var(--color-light-border);
+  vertical-align:middle;
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="brand">🎨 Gitea 主题预览器</span>
+  <select id="theme-select" disabled><option>（尚未加载主题）</option></select>
+  <span class="theme-count empty" id="theme-count">0 个主题</span>
+  <button class="btn btn-primary" id="btn-files">📄 选择 CSS 文件</button>
+  <button class="btn" id="btn-folder">📁 选择文件夹</button>
+  <button class="btn btn-danger" id="btn-clear">🗑 清空</button>
+  <button class="btn" id="btn-help" style="margin-left:auto">❓ 帮助</button>
+</div>
+
+<input type="file" id="in-files" accept=".css,text/css" multiple hidden>
+<input type="file" id="in-folder" webkitdirectory directory hidden>
+<div class="drop-veil"><div>📥 松开以加载 CSS 主题</div></div>
+
+<!-- ==================================================
+     帮助面板
+     ================================================== -->
+<div class="help-veil" id="help-veil">
+  <div class="help-panel">
+    <div class="help-head">
+      <span>📖 使用说明 &amp; 开发定制</span>
+      <button class="help-close" id="help-close" title="关闭">✕</button>
+    </div>
+    <div class="help-body">
+
+      <h3>🚀 快速开始</h3>
+      <ol>
+        <li>点击 <span class="kbd">📄 选择 CSS 文件</span> 选一批 <code>.css</code> 主题文件</li>
+        <li>或点 <span class="kbd">📁 选择文件夹</span> 一次性加载整个目录（推荐，能保留目录结构）</li>
+        <li>或直接把文件/文件夹 <strong>拖拽</strong> 到页面上</li>
+        <li>加载后，右上角的 <strong>下拉框</strong> 会按系列分组显示所有主题</li>
+        <li>选择任意主题，预览区立即应用</li>
+        <li>点 <span class="kbd">🗑 清空</span> 移除所有已加载的主题</li>
+      </ol>
+
+      <h3>💡 使用技巧</h3>
+      <table>
+        <tr><th>场景</th><th>做法</th></tr>
+        <tr><td>一次加载整套主题</td><td>用「选择文件夹」，一次性把 <code>theme-*</code> 全部拖入</td></tr>
+        <tr><td>对比不同主题的调色板</td><td>切换主题后，页面底部「调色板」会实时更新</td></tr>
+        <tr><td>区分同名文件</td><td>通过文件夹上传/拖拽文件夹，下拉里会显示带目录的完整路径</td></tr>
+        <tr><td>Auto 主题的正确加载</td><td><code>@import</code> 依赖的 <code>latte</code>/<code>mocha</code> 文件要一起加载</td></tr>
+      </table>
+
+      <h3>📛 文件名识别规则</h3>
+      <p>本工具按文件名自动分组、显示中文名，格式如下：</p>
+      <pre>theme-&lt;系列&gt;-&lt;风味&gt;-&lt;色调&gt;[-auto].css</pre>
+      <table>
+        <tr><th>段</th><th>示例</th><th>说明</th></tr>
+        <tr><td>前缀</td><td><code>theme-</code></td><td>固定，缺了也能加载但会归入「其他」</td></tr>
+        <tr><td>系列</td><td><code>github-catppuccin</code></td><td>决定归到哪个大分组</td></tr>
+        <tr><td>风味</td><td><code>latte</code>/<code>frappe</code>/<code>mocha</code></td><td>部分系列会按风味再分子组</td></tr>
+        <tr><td>色调</td><td><code>mauve</code>/<code>blue</code>/<code>green</code></td><td>会映射成中文显示</td></tr>
+        <tr><td>后缀</td><td><code>-auto</code></td><td>表示跟随系统，显示为「自动」</td></tr>
+      </table>
+      <p>示例：</p>
+      <pre>theme-catppuccin-mocha-mauve.css   → 🎨 Catppuccin / 🌑 Mocha / 淡紫
+theme-github-high-contrast-dark.css → 🐙 GitHub · 高对比 / 深色
+theme-auto.css                      → 🏠 Gitea 基础 / 自动</pre>
+
+      <h3>📁 目录结构建议</h3>
+      <p>推荐按系列放到不同子目录，这样可以避免同名冲突：</p>
+      <pre>themes/
+├── catppuccin/
+│   ├── theme-catppuccin-mocha-mauve.css
+│   └── theme-catppuccin-latte-blue.css
+├── github/
+│   ├── theme-github-dark.css
+│   └── theme-github-light.css
+└── theme-auto.css</pre>
+
+      <h3>🛠 开发定制</h3>
+      <p>如果你想自己改代码，下面是最常调整的 6 个地方。它们都在 <code>&lt;script&gt;</code> 顶部，全局搜索对应变量名就能找到。</p>
+
+      <details>
+        <summary>① 新增一个「系列」<span class="tag">THEME_SERIES</span></summary>
+        <div>
+          <p>比如想让所有 <code>theme-vscode-*</code> 归到「💻 VS Code」：</p>
+          <pre>const THEME_SERIES = [
+  // ★ 新增这一行，注意前缀以 - 结尾
+  { prefix:'theme-vscode-', name:'vscode', label:'💻 VS Code', order:240 },
+  // ...其他不变
+];</pre>
+          <p><strong>order 决定分组在下拉框中的顺序</strong>，越小越靠上。参考值：</p>
+          <ul>
+            <li><code>30</code> — 基础主题组（Gitea 基础）</li>
+            <li><code>100–199</code> — GitHub 变体系列</li>
+            <li><code>200–299</code> — Catppuccin / Tokyo Night 等</li>
+            <li><code>900</code> — 兜底「其他」</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>② 让某系列按「风味」再分组<span class="tag">splitByFlavor</span></summary>
+        <div>
+          <p>例如 Catppuccin 有 Latte/Frappé/Macchiato/Mocha 四种风味，代码里是：</p>
+          <pre>{ prefix:'theme-catppuccin-', name:'catppuccin',
+  label:'🎨 Catppuccin', <strong>splitByFlavor:true</strong>, order:200 }</pre>
+          <p>开启后，会从 <code>rest</code> 里剥离 <code>latte</code> 等关键词，把组拆成「🎨 Catppuccin · ☀️ Latte（浅色）」这种形式。</p>
+          <p>新增风味在 <code>FLAVORS</code> 里加：</p>
+          <pre>const FLAVORS = {
+  // ...
+  <strong>espresso: { group:'espresso', label:'☕ Espresso', order:45 },</strong>
+};</pre>
+        </div>
+      </details>
+
+      <details>
+        <summary>③ 新增色调的中文名<span class="tag">TINT_KEYWORDS</span></summary>
+        <div>
+          <p>现在 <code>cyan</code> 会原样显示。想让它显示为「青蓝」：</p>
+          <pre>const TINT_KEYWORDS = {
+  // ...
+  <strong>cyan: '青蓝',</strong>
+  <strong>teal: '青绿',</strong>  // 覆盖已有映射也行
+};</pre>
+          <p><strong>复合词要放长键优先</strong>（代码已自动按长度排序）：</p>
+          <pre>'high-contrast':'高对比',    // 会先匹配整段
+'high':'高', 'contrast':'对比',  // 分散写也能兜底</pre>
+        </div>
+      </details>
+
+      <details>
+        <summary>④ 基础主题 / 其他分组的判断<span class="tag">BASIC_MODES</span></summary>
+        <div>
+          <p>「🏠 Gitea 基础」组里目前是 <code>theme-auto.css</code>、<code>theme-dark.css</code>、<code>theme-light.css</code> 这种纯模式文件。</p>
+          <p>如果还有 <code>theme-system.css</code>，加进去：</p>
+          <pre>const BASIC_MODES = new Set(['auto', 'dark', 'light', <strong>'system'</strong>]);</pre>
+          <p>改分组名：</p>
+          <pre>const BASIC_GROUP = {
+  group:'basic',
+  groupLabel:<strong>'🏠 纯模式主题'</strong>,
+  order:30
+};</pre>
+        </div>
+      </details>
+
+      <details>
+        <summary>⑤ 调整预览区自身的颜色<span class="tag">回退变量</span></summary>
+        <div>
+          <p>预览页本身也是一套 <code>:root</code> 变量（未加载主题时兜底）。搜索 <code>:root</code> 找到最上面那块，比如：</p>
+          <pre>:root{
+  --color-body:#1e1e2e;         /* 页面背景 */
+  --color-text:#cdd6f4;         /* 主要文字 */
+  --color-primary:#cba6f7;      /* 主色（链接、按钮） */
+  --color-navbar: var(--color-nav-bg, #181825);  /* 工具条背景 */
+  /* ... */
+}</pre>
+          <p>想换成自己的默认配色，直接改这几行即可。加载主题后这些会被主题覆盖。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>⑥ 改工具条按钮顺序 / 文案<span class="tag">HTML</span></summary>
+        <div>
+          <p>搜索 <code>&lt;div class="toolbar"&gt;</code> 找到工具条，里面的按钮随你调整：</p>
+          <pre>&lt;button class="btn btn-primary" id="btn-files"&gt;📄 选择 CSS 文件&lt;/button&gt;
+&lt;button class="btn" id="btn-folder"&gt;📁 选择文件夹&lt;/button&gt;
+&lt;button class="btn btn-danger" id="btn-clear"&gt;🗑 清空&lt;/button&gt;</pre>
+          <p>改文案直接改标签里的文字；改样式改 <code>class</code>（可选 <code>btn</code>/<code>btn-primary</code>/<code>btn-danger</code>）。</p>
+        </div>
+      </details>
+
+      <h3>🔍 关键函数速查</h3>
+      <table>
+        <tr><th>函数</th><th>作用</th></tr>
+        <tr><td><code>describe(fileKey)</code></td><td>把文件名解析成 { 分组、中文名、色调 } 等元信息</td></tr>
+        <tr><td><code>splitTint(raw)</code></td><td>把 <code>high-contrast-colorblind-dark</code> 拆成 <code>高对比·色盲·深色</code></td></tr>
+        <tr><td><code>getFileKey(file)</code></td><td>返回 <code>webkitRelativePath || name</code>，用于唯一标识</td></tr>
+        <tr><td><code>ingestFiles(fileList)</code></td><td>批量加载文件，写入 registry / themes</td></tr>
+        <tr><td><code>renderPicker()</code></td><td>重建下拉框（按 order 排序分组）</td></tr>
+        <tr><td><code>applyTheme(id)</code></td><td>把选中的主题应用到 <code>#theme-link</code></td></tr>
+        <tr><td><code>resolveImports(text, key)</code></td><td>处理 <code>@import</code>，同目录优先</td></tr>
+        <tr><td><code>renderScale()</code></td><td>渲染主色阶 + 变量速览表</td></tr>
+      </table>
+
+      <h3>⚠ 已知限制</h3>
+      <ul>
+        <li><strong>单文件上传无法区分同名</strong>：浏览器只给 <code>file.name</code>，两个 <code>theme-dark.css</code> 会互相覆盖。→ 用文件夹上传/拖拽。</li>
+        <li><strong>@import 依赖需一起加载</strong>：Auto 主题引用的 Latte/Mocha 文件如果没加载，会回退到「按原样加载」。</li>
+        <li><strong>不支持远程 URL</strong>：出于 CORS 考虑，主题必须是本地文件。</li>
+      </ul>
+
+      <h3>🎨 关于 CSS 变量名</h3>
+      <p>本预览器使用 Gitea 官方变量名，其中 <code>--color-nav-bg</code> 是导航栏背景的标准名。旧主题若只定义 <code>--color-navbar</code>，本工具已做了兼容回退：</p>
+      <pre>--color-navbar: var(--color-nav-bg, #181825);</pre>
+
+      <!-- ============ 关于 ============ -->
+      <h3>📄 关于</h3>
+
+      <div class="about-head">
+        <div class="logo">🎨</div>
+        <p class="title">Gitea 主题预览器</p>
+        <p class="subtitle">一个用于预览和对比 Gitea 主题的纯前端工具</p>
+        <p class="meta">
+          版本 1.0.0 · 更新于 2026-09-23<br>
+          纯静态 HTML · 无后端 · 无网络请求 · 无数据上传
+        </p>
+      </div>
+
+      <h4>📜 开源许可</h4>
+      <p>本项目采用 <strong>MIT License</strong> 完全开源。你可以自由地使用、修改、分发、商用，无需征得作者同意，唯一要求是保留原始版权声明。</p>
+      <p>你可以直接复制整个 HTML 文件使用，也可以 fork 后按自己的需求改造。</p>
+      <pre>MIT License
+
+Copyright (c) 2026 skyares
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.</pre>
+
+      <h4>👥 制作团队</h4>
+      <div class="about-person">
+        <span class="avatar">S</span>
+        <span><strong>skyares</strong>　原作者 / 维护者</span>
+        <span class="role">author</span>
+      </div>
+      <div class="about-person">
+        <span class="avatar">D</span>
+        <span><strong>DeepSeek</strong>　AI 协作开发</span>
+        <span class="role">ai-collab</span>
+      </div>
+      <p style="font-size:12.5px;color:var(--color-text-dark);margin-top:8px">
+        AI 协作范围：架构设计、主题识别逻辑、<code>@import</code> 解析、拖拽目录处理、帮助文档撰写。
+      </p>
+
+      <h4>🔧 技术栈</h4>
+      <p>纯原生实现，零依赖、零构建：</p>
+      <ul>
+        <li><strong>HTML5 + CSS3</strong> —— CSS 变量驱动主题切换</li>
+        <li><strong>Vanilla JavaScript</strong> —— 无框架、无构建、无打包</li>
+        <li><strong>File API + Blob URL</strong> —— 本地加载与解析 CSS</li>
+        <li><strong>WebkitEntry API</strong> —— 拖拽目录递归遍历</li>
+      </ul>
+      <p>依赖 Gitea 官方主题变量规范，例如：</p>
+      <pre>--color-body        /* 页面背景 */
+--color-text        /* 主要文字 */
+--color-primary     /* 主色 / 链接 / 按钮 */
+--color-nav-bg      /* 导航栏背景 */
+--color-light-border /* 边框 */</pre>
+
+      <h4>⚠️ 免责声明</h4>
+      <div class="about-note">
+        本工具仅用于<strong>本地预览 CSS 主题文件</strong>，不读取、不上传、不存储任何用户文件。所有操作均在浏览器内存中完成，关闭页面后数据自动清除。<br>
+        主题文件的版权归各自的作者所有。
+      </div>
+
+      <p style="text-align:center;font-size:11.5px;color:var(--color-text-dark);margin-top:24px;padding-top:16px;border-top:1px dashed var(--color-light-border)">
+        Made with 🎨 by skyares &amp; DeepSeek · MIT License · 2026
+      </p>
+
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================
+     预览内容
+     ================================================== -->
+<div class="wrap">
+  <h2>导航栏 / Navbar</h2>
+  <nav class="navbar">
+    <a href="#" class="on">概览</a>
+    <a href="#">代码</a>
+    <a href="#">Issues <span class="badge">12</span></a>
+    <a href="#">Pull Requests</a>
+    <a href="#">Actions</a>
+    <a href="#">Wiki</a>
+    <a href="#">设置</a>
+  </nav>
+
+  <h2>按钮 / Buttons</h2>
+  <div class="row">
+    <button class="btn btn-primary">新建仓库</button>
+    <button class="btn">取消</button>
+    <button class="btn" style="background:var(--color-green);border-color:var(--color-green);color:var(--color-success-text);font-weight:600">合并</button>
+    <button class="btn" style="background:var(--color-red);border-color:var(--color-red);color:var(--color-error-text);font-weight:600">删除</button>
+    <button class="btn" style="background:transparent">更多操作</button>
+    <button class="btn" disabled>已禁用</button>
+  </div>
+
+  <h2>表单 / Forms</h2>
+  <div class="grid">
+    <div><label>仓库名称</label><input type="text" placeholder="my-awesome-project"></div>
+    <div><label>可见性</label><select class="field"><option>公开</option><option>私有</option></select></div>
+    <div><label>描述</label><input type="text" placeholder="简要描述这个仓库…"></div>
+  </div>
+
+  <h2>标签 / Labels &amp; Badges</h2>
+  <div class="row">
+    <span class="label">primary</span>
+    <span class="label red">bug</span>
+    <span class="label green">enhancement</span>
+    <span class="label yellow">documentation</span>
+    <span class="label blue">help wanted</span>
+    <span class="label purple">good first issue</span>
+    <span class="label teal">performance</span>
+    <span class="label pink">design</span>
+    <span class="label orange">priority</span>
+    <span class="label outline">draft</span>
+  </div>
+
+  <h2>卡片 / Cards</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="card-h">📦 gitea <span class="label green" style="margin-left:auto">Public</span></div>
+      <div class="card-b"><strong>Git with a cup of tea.</strong><br>一个自托管的 Git 服务，用 Go 编写。</div>
+    </div>
+    <div class="card">
+      <div class="card-h">🔀 Pull Request #4821</div>
+      <div class="card-b"><strong>fix: 修复深色模式下代码块对比度</strong><br>由 <a href="#">@octocat</a> 提交 · 3 条评论</div>
+    </div>
+    <div class="card">
+      <div class="card-h">⚙️ 运行状态</div>
+      <div class="card-b"><strong>构建 #1287</strong> · 通过<br>耗时 1m 42s</div>
+    </div>
+  </div>
+
+  <h2>代码高亮 / Code</h2>
+<pre class="code"><code><span style="color:var(--color-grey)">// 计算斐波那契数列</span>
+<span style="color:var(--color-purple)">function</span> <span style="color:var(--color-blue)">fib</span>(<span style="color:var(--color-text)">n</span>) {
+  <span style="color:var(--color-purple)">if</span> (n &lt; <span style="color:var(--color-orange)">2</span>) <span style="color:var(--color-purple)">return</span> n;
+  <span style="color:var(--color-purple)">return</span> <span style="color:var(--color-blue)">fib</span>(n - <span style="color:var(--color-orange)">1</span>) + <span style="color:var(--color-blue)">fib</span>(n - <span style="color:var(--color-orange)">2</span>);
+}
+
+<span style="color:var(--color-purple)">const</span> answer = <span style="color:var(--color-blue)">fib</span>(<span style="color:var(--color-orange)">10</span>);   <span style="color:var(--color-grey)">// 55</span>
+<span style="color:var(--color-purple)">const</span> greeting = <span style="color:var(--color-green)">"Hello, Catppuccin!"</span>;
+<span style="color:var(--color-purple)">const</span> isReady = <span style="color:var(--color-orange)">true</span>;
+</code></pre>
+
+  <p style="font-size:13px;color:var(--color-text-light)">
+    行内代码：<code class="inline">npm install catppuccin</code> 或
+    <code class="inline">git commit -m "feat: 新主题"</code>
+  </p>
+
+  <h2>代码差异 / Diff</h2>
+  <div class="diff">
+    <div class="ctx">@@ -12,7 +12,7 @@ export function greet(name) {</div>
+    <div class="ctx">   const prefix = "Hello";</div>
+    <div class="del">-  return prefix + name;</div>
+    <div class="add">+  return `${prefix}, ${name}!`;</div>
+    <div class="mv">~  // 移动自 utils.js</div>
+    <div class="ctx"> }</div>
+  </div>
+
+  <h2>消息提示 / Messages</h2>
+  <div class="msg tip">✓ 成功：仓库已创建。</div>
+  <div class="msg warn">⚠ 警告：该分支已落后于 main 分支。</div>
+  <div class="msg err">✕ 错误：无法连接到远程仓库。</div>
+
+  <!-- =========================================================
+       ★ 新增：主色阶
+       ========================================================= -->
+  <h2>主色阶 / Primary Scale</h2>
+  <p style="font-size:12.5px;color:var(--color-text-dark);margin-bottom:8px">
+    Catppuccin / GitHub 等主题的「色调变体」（红、粉、蓝、绿…）共用同一套基础色，只把整套
+    <code style="background:var(--color-markup-code-inline);padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace;font-size:11.5px">--color-primary-*</code>
+    派生变量替换成对应颜色。<strong>下面这一整条色阶就是切换主题时真正变化的部分。</strong>
+  </p>
+
+  <div class="scale-row-label">主色本体 · --color-primary</div>
+  <div class="scale-grid cols-7" id="scale-primary"></div>
+
+  <div class="scale-row-label">亮色系 · light-1 → light-7（数字越大越亮）</div>
+  <div class="scale-grid cols-7" id="scale-light"></div>
+
+  <div class="scale-row-label">暗色系 · dark-1 → dark-7（数字越大越暗）</div>
+  <div class="scale-grid cols-7" id="scale-dark"></div>
+
+  <div class="scale-row-label">透明层 · alpha-10 → alpha-90（叠在白色背景上）</div>
+  <div class="scale-grid cols-9" id="scale-alpha"></div>
+
+  <!-- =========================================================
+       ★ 新增：派生色实际用途
+       ========================================================= -->
+  <h2>派生色实际用途 / Usage</h2>
+  <p style="font-size:12.5px;color:var(--color-text-dark);margin-bottom:8px">
+    下面每一块 UI 都<strong>真实使用了主色阶里的某个派生变量</strong>。切换主题时，这一整片区域的颜色都会跟着变——这就是派生色在 Gitea 里的实际用途。
+  </p>
+
+  <div class="usage-grid">
+    <div class="usage-card">
+      <div class="usage-title">① 淡色徽章 / Soft Badge</div>
+      <div class="usage-demo">
+        <span class="demo-badge-soft">enhancement</span>
+        <span class="demo-badge-soft">help wanted</span>
+      </div>
+      <div class="usage-var">
+        background: --color-primary-alpha-30<br>
+        color: --color-primary<br>
+        border: --color-primary-alpha-60
+      </div>
+    </div>
+
+    <div class="usage-card">
+      <div class="usage-title">② 输入框聚焦光晕 / Focus Ring</div>
+      <div class="usage-demo">
+        <input class="demo-focus" value="聚焦时的高亮边框" readonly>
+      </div>
+      <div class="usage-var">
+        box-shadow: 0 0 0 3px --color-primary-alpha-30<br>
+        border: --color-primary
+      </div>
+    </div>
+
+    <div class="usage-card">
+      <div class="usage-title">③ 选中列表项 / Selected Item</div>
+      <div class="usage-demo">
+        <div class="demo-list">
+          <div class="demo-item">普通列表项</div>
+          <div class="demo-item active">← 当前选中</div>
+          <div class="demo-item">普通列表项</div>
+        </div>
+      </div>
+      <div class="usage-var">
+        background: --color-primary-alpha-10<br>
+        border-left: --color-primary
+      </div>
+    </div>
+
+    <div class="usage-card">
+      <div class="usage-title">④ 按钮三态 / Button States</div>
+      <div class="usage-demo demo-btn-row">
+        <span class="demo-btn demo-btn-light1">hover</span>
+        <span class="demo-btn demo-btn-base">normal</span>
+        <span class="demo-btn demo-btn-dark2">active</span>
+      </div>
+      <div class="usage-var">
+        hover: --color-primary-light-2<br>
+        normal: --color-primary<br>
+        active: --color-primary-dark-2
+      </div>
+    </div>
+
+    <div class="usage-card">
+      <div class="usage-title">⑤ 引用块 / Blockquote</div>
+      <div class="usage-demo">
+        <div class="demo-quote">左侧描边用主色，背景用淡透明色。</div>
+      </div>
+      <div class="usage-var">
+        border-left: --color-primary-light-1<br>
+        background: --color-primary-alpha-10
+      </div>
+    </div>
+
+    <div class="usage-card">
+      <div class="usage-title">⑥ 主色本体 / Solid Accent</div>
+      <div class="usage-demo">
+        <span class="label" style="background:var(--color-primary);color:var(--color-primary-contrast)">主色徽章</span>
+        <button class="btn btn-primary" style="margin-top:8px">主按钮</button>
+      </div>
+      <div class="usage-var">
+        background: --color-primary<br>
+        color: --color-primary-contrast
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       ★ 新增：变量速览
+       ========================================================= -->
+  <h2>变量速览 / Variables</h2>
+  <p style="font-size:12.5px;color:var(--color-text-dark);margin-bottom:8px">
+    当前主题生效的主色变量。切换主题时这些值都会变——它们就是 Gitea 里「主色」的完整定义。
+  </p>
+  <table class="var-table" id="var-table"></table>
+
+  <h2>调色板 / Palette</h2>
+  <div class="grid" id="palette"></div>
+
+  <h2>文本层级 / Typography</h2>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <span style="color:var(--color-text);font-size:16px;font-weight:600">--color-text · 主要文本</span>
+    <span style="color:var(--color-text-light)">--color-text-light · 次要文本（卡片描述）</span>
+    <span style="color:var(--color-text-dark)">--color-text-dark · 辅助文本（时间戳、说明）</span>
+    <span style="color:var(--color-placeholder-text)">--color-placeholder-text · 占位符</span>
+    <span><a href="#">--color-primary · 链接颜色</a></span>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const linkEl    = document.getElementById('theme-link');
+const selEl     = document.getElementById('theme-select');
+const countEl   = document.getElementById('theme-count');
+const paletteEl = document.getElementById('palette');
+
+const registry = new Map();
+const themes   = new Map();
+let   activeId = null;
+let   paletteTimer = null;
+
+/* =========================================================
+   ★ 主题系列配置（长前缀优先，order 越小越靠前）
+   ========================================================= */
+const THEME_SERIES = [
+  { prefix:'theme-github-high-contrast-colorblind-', name:'gh-hc-colorblind', label:'🐙 GitHub · 高对比·色盲', order:181 },
+  { prefix:'theme-github-high-contrast-tritanopia-', name:'gh-hc-tritanopia', label:'🐙 GitHub · 高对比·蓝盲', order:182 },
+  { prefix:'theme-github-high-contrast-',            name:'gh-high-contrast', label:'🐙 GitHub · 高对比',      order:180 },
+  { prefix:'theme-github-catppuccin-',               name:'gh-catppuccin',    label:'🐙 GitHub · Catppuccin',  order:120 },
+  { prefix:'theme-github-colorblind-',               name:'gh-colorblind',    label:'🐙 GitHub · 色盲友好',    order:150 },
+  { prefix:'theme-github-tritanopia-',               name:'gh-tritanopia',    label:'🐙 GitHub · 蓝盲友好',    order:160 },
+  { prefix:'theme-github-pink-',                     name:'gh-pink',          label:'🐙 GitHub · 粉色',        order:130 },
+  { prefix:'theme-github-gitea-',                    name:'gh-gitea',         label:'🐙 GitHub · Gitea',       order:110 },
+  { prefix:'theme-github-',                          name:'github',           label:'🐙 GitHub',               order:100 },
+  { prefix:'theme-catppuccin-', name:'catppuccin', label:'🎨 Catppuccin', splitByFlavor:true, order:200 },
+  { prefix:'theme-tokyo-night-', name:'tokyonight', label:'🌃 Tokyo Night', splitByFlavor:true, order:210 },
+  { prefix:'theme-dracula-',     name:'dracula',    label:'🧛 Dracula',     splitByFlavor:true, order:220 },
+  { prefix:'theme-nord-',        name:'nord',       label:'❄️ Nord',         splitByFlavor:true, order:230 },
+  { prefix:'theme-',             name:'generic',    label:'📦 其他系列',                          order:900 },
+];
+
+const BASIC_GROUP = { group:'basic', groupLabel:'🏠 Gitea 基础', order:30 };
+const BASIC_MODES = new Set(['auto', 'dark', 'light']);
+
+const FLAVORS = {
+  latte:     { group:'latte',     label:'☀️ Latte（浅色）',    order:10 },
+  frappe:    { group:'frappe',    label:'🌤️ Frappé（中深）',   order:20 },
+  macchiato: { group:'macchiato', label:'🌙 Macchiato（深色）', order:30 },
+  mocha:     { group:'mocha',     label:'🌑 Mocha（最深）',     order:40 },
+  light:     { group:'light',     label:'☀️ Light（浅色）',     order:50 },
+  dark:      { group:'dark',      label:'🌑 Dark（深色）',      order:55 },
+  nord:      { group:'nord',      label:'❄️ Nord',              order:60 },
+};
+
+const TINT_KEYWORDS = {
+  'high-contrast':'高对比', 'soft-dark':'柔和深色',
+  auto:'自动', dark:'深色', light:'浅色',
+  colorblind:'色盲', tritanopia:'蓝盲',
+  latte:'Latte', frappe:'Frappé', macchiato:'Macchiato', mocha:'Mocha',
+  red:'红', orange:'橙', yellow:'黄', olive:'橄榄', green:'绿', teal:'青',
+  sky:'天蓝', sapphire:'蓝宝石', blue:'蓝', lavender:'薰衣草', violet:'紫罗兰',
+  purple:'紫', mauve:'淡紫', pink:'粉', flamingo:'火烈鸟', rosewater:'玫瑰水',
+  maroon:'栗', peach:'桃', brown:'棕', gold:'金', white:'白', grey:'灰',
+  gray:'灰', black:'黑',
+};
+
+function splitTint(raw){
+  if (!raw) return [];
+  const keys = Object.keys(TINT_KEYWORDS).sort((a, b) => b.length - a.length);
+  const parts = [];
+  let s = raw, guard = 0;
+  while (s && guard++ < 20){
+    let matched = false;
+    for (const k of keys){
+      if (s === k || s.startsWith(k + '-')){
+        parts.push(TINT_KEYWORDS[k]);
+        s = (s === k) ? '' : s.slice(k.length + 1);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched){
+      const seg = s.split('-')[0];
+      parts.push(seg);
+      s = s.slice(seg.length);
+      if (s.startsWith('-')) s = s.slice(1);
+    }
+  }
+  return parts;
+}
+
+function getFileKey(file){
+  return (file.webkitRelativePath || '').trim() || file.name;
+}
+
+function describe(fileKey){
+  const fileName = fileKey.split('/').pop();
+  const parts = fileKey.split('/');
+  const dirName = parts.length > 1 ? parts[parts.length - 2] : '';
+
+  const base = fileName.replace(/\.css$/i, '');
+
+  let series = { name:'unknown', label:'📄 其他', splitByFlavor:false, order:999 };
+  let rest = base;
+  const sorted = [...THEME_SERIES].sort((a, b) => b.prefix.length - a.prefix.length);
+  for (const s of sorted){
+    if (base.startsWith(s.prefix)){
+      series = s;
+      rest = base.slice(s.prefix.length);
+      break;
+    }
+  }
+
+  let seriesFromDir = false;
+  if (series.name === 'generic' && dirName){
+    const fromDir = sorted.find(s => {
+      if (s.name === 'generic' || s.name === 'unknown') return false;
+      if (s.name === dirName) return true;
+      const stripped = s.prefix.replace(/^theme-/, '').replace(/-$/, '');
+      return stripped === dirName;
+    });
+    if (fromDir){ series = fromDir; seriesFromDir = true; }
+  }
+
+  let flavor = null;
+  if (series.splitByFlavor){
+    for (const key of Object.keys(FLAVORS)){
+      if (rest === key || rest.startsWith(key + '-')){
+        flavor = { key, ...FLAVORS[key] };
+        rest = (rest === key) ? '' : rest.slice(key.length + 1);
+        break;
+      }
+    }
+  }
+
+  let isAuto = false;
+  let tintRest = rest;
+  if (tintRest === 'auto'){ isAuto = true; tintRest = ''; }
+  else if (/-auto$/.test(tintRest)){ isAuto = true; tintRest = tintRest.replace(/-auto$/, ''); }
+
+  const parts2 = splitTint(tintRest);
+  if (isAuto) parts2.push('自动');
+  const tintLabel = parts2.length ? parts2.join('·') : '默认';
+
+  const displayName = `${tintLabel}(${fileKey})`;
+
+  let group, groupLabel, order;
+  const isGeneric = (series.name === 'generic' || series.name === 'unknown');
+
+  if (isGeneric){
+    const pureMode = tintRest === '' || BASIC_MODES.has(tintRest);
+    if (pureMode){
+      group = BASIC_GROUP.group;
+      groupLabel = BASIC_GROUP.groupLabel;
+      order = BASIC_GROUP.order;
+    } else {
+      group = 'other'; groupLabel = '📄 其他'; order = 999;
+    }
+  } else if (flavor){
+    group = `${series.name}-${flavor.group}`;
+    groupLabel = flavor.label;
+    order = series.order + flavor.order / 1000;
+  } else {
+    group = series.name;
+    groupLabel = series.label;
+    order = series.order;
+  }
+
+  return {
+    id: fileKey, fileKey, fileName,
+    series: series.name, seriesFromDir,
+    group, groupLabel, order,
+    tint: tintLabel, tintRaw: tintRest,
+    displayName, auto: isAuto,
+  };
+}
+
+function extractImports(text){
+  const re = /@import\s+(?:url\(\s*)?["']?([^"')\s;]+)["']?\s*\)?([^;]*);/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(text))) out.push(m[1].split('/').pop());
+  return out;
+}
+
+function resolveImports(text, currentKey){
+  const dir = currentKey.includes('/')
+    ? currentKey.slice(0, currentKey.lastIndexOf('/') + 1)
+    : '';
+  return text.replace(
+    /@import\s+(?:url\(\s*)?["']?([^"')\s;]+)["']?\s*\)?([^;]*);/g,
+    (full, ref, media) => {
+      const baseName = ref.split('/').pop();
+      const dep = registry.get(dir + baseName) || registry.get(baseName);
+      if (!dep || !dep.url) return `/* ⚠ 缺少依赖：${ref} */`;
+      return `@import url("${dep.url}")${media};`;
+    }
+  );
+}
+
+function rebuildUrls(){
+  for (const e of registry.values()){
+    if (e.url){ URL.revokeObjectURL(e.url); e.url = null; }
+  }
+  const pending = new Set(registry.keys());
+  let guard = 0;
+  while (pending.size && guard++ < 30){
+    let progressed = false;
+    for (const key of [...pending]){
+      const entry = registry.get(key);
+      const dir = key.includes('/') ? key.slice(0, key.lastIndexOf('/') + 1) : '';
+      const deps = extractImports(entry.text);
+      const ready = deps.every(d => {
+        const dep = registry.get(dir + d) || registry.get(d);
+        return dep && dep.url;
+      });
+      if (!ready) continue;
+      entry.url = URL.createObjectURL(
+        new Blob([resolveImports(entry.text, key)], { type:'text/css' })
+      );
+      pending.delete(key);
+      progressed = true;
+    }
+    if (!progressed) break;
+  }
+  for (const key of pending){
+    const entry = registry.get(key);
+    entry.url = URL.createObjectURL(
+      new Blob([entry.text], { type:'text/css' })
+    );
+  }
+}
+
+async function ingestFiles(fileList){
+  const cssFiles = [...(fileList || [])].filter(f => /\.css$/i.test(f.name));
+  if (!cssFiles.length){ toast('未发现 .css 文件'); return; }
+
+  let added = 0, replaced = 0;
+  for (const f of cssFiles){
+    const text = await f.text();
+    const key  = getFileKey(f);
+    const prev = registry.get(key);
+    if (prev){
+      if (prev.text === text) continue;
+      if (prev.url) URL.revokeObjectURL(prev.url);
+      replaced++;
+    } else added++;
+    registry.set(key, { text, url:null });
+    themes.set(key, describe(key));
+  }
+
+  rebuildUrls();
+  renderPicker();
+  updateStatus();
+  if (activeId && themes.has(activeId)) applyTheme(activeId);
+
+  const ps = [];
+  if (added) ps.push(`新增 ${added}`);
+  if (replaced) ps.push(`替换 ${replaced}`);
+  toast(`已加载 ${cssFiles.length} 个文件${ps.length ? `（${ps.join('，')}）` : ''}`);
+}
+
+function renderPicker(){
+  const prevActive = activeId;
+  selEl.innerHTML = '';
+  if (!themes.size){
+    const o = document.createElement('option');
+    o.textContent = '（尚未加载主题）';
+    o.disabled = true; o.selected = true;
+    selEl.appendChild(o);
+    selEl.disabled = true;
+    activeId = null;
+    return;
+  }
+  selEl.disabled = false;
+
+  const groups = new Map();
+  for (const t of themes.values()){
+    if (!groups.has(t.group)){
+      groups.set(t.group, { label:t.groupLabel, order:t.order, items:[] });
+    }
+    groups.get(t.group).items.push(t);
+  }
+  const sorted = [...groups.entries()].sort((a, b) => a[1].order - b[1].order);
+
+  for (const [, g] of sorted){
+    const og = document.createElement('optgroup');
+    og.label = g.label;
+    g.items.sort((a, b) => {
+      const c = a.tint.localeCompare(b.tint, 'zh-Hans-CN');
+      return c !== 0 ? c : a.fileKey.localeCompare(b.fileKey);
+    });
+    for (const t of g.items){
+      const o = document.createElement('option');
+      o.value = t.id;
+      o.textContent = t.displayName;
+      o.title = t.fileKey;
+      og.appendChild(o);
+    }
+    selEl.appendChild(og);
+  }
+
+  if (prevActive && themes.has(prevActive)){
+    activeId = prevActive;
+    selEl.value = prevActive;
+  } else {
+    const first = selEl.querySelector('option:not([disabled])');
+    if (first){
+      activeId = first.value;
+      selEl.value = activeId;
+      applyTheme(activeId);
+    }
+  }
+}
+
+function applyTheme(id){
+  const t = themes.get(id);
+  if (!t) return;
+  const entry = registry.get(t.fileKey);
+  if (!entry || !entry.url) return;
+  activeId = id;
+  if (selEl.value !== id) selEl.value = id;
+  linkEl.href = entry.url;
+  clearTimeout(paletteTimer);
+  paletteTimer = setTimeout(() => {
+    renderPalette();
+    renderScale();
+  }, 50);
+}
+
+const PALETTE_VARS = ['red','orange','yellow','green','teal','blue','violet','purple','pink',
+                      'brown','grey','gold','white','black','primary','secondary'];
+function renderPalette(){
+  const cs = getComputedStyle(document.documentElement);
+  paletteEl.innerHTML = '';
+  for (const v of PALETTE_VARS){
+    const val = cs.getPropertyValue('--color-' + v).trim();
+    if (!val) continue;
+    const el = document.createElement('div');
+    el.className = 'swatch';
+    el.innerHTML = `<div class="chip" style="background:${val}"></div>
+                    <div class="name">--color-${v}</div>`;
+    paletteEl.appendChild(el);
+  }
+}
+
+/* =========================================================
+   ★ 新增：主色阶 + 变量速览
+   ========================================================= */
+const SCALE_LIGHT = [
+  'primary-light-1','primary-light-2','primary-light-3','primary-light-4',
+  'primary-light-5','primary-light-6','primary-light-7'
+];
+const SCALE_DARK = [
+  'primary-dark-1','primary-dark-2','primary-dark-3','primary-dark-4',
+  'primary-dark-5','primary-dark-6','primary-dark-7'
+];
+const SCALE_ALPHA = [
+  'primary-alpha-10','primary-alpha-20','primary-alpha-30','primary-alpha-40','primary-alpha-50',
+  'primary-alpha-60','primary-alpha-70','primary-alpha-80','primary-alpha-90'
+];
+const VAR_LIST = [
+  'primary','primary-contrast','primary-hover',
+  'primary-light-1','primary-light-2','primary-light-3','primary-light-4',
+  'primary-light-5','primary-light-6','primary-light-7',
+  'primary-dark-1','primary-dark-2','primary-dark-3','primary-dark-4',
+  'primary-dark-5','primary-dark-6','primary-dark-7',
+  'primary-alpha-10','primary-alpha-30','primary-alpha-50','primary-alpha-90',
+];
+
+function renderScale(){
+  const cs = getComputedStyle(document.documentElement);
+
+  /* 生成一个色块 cell
+     - onWhite: alpha 层要叠在白底上才看得出来 */
+  const makeCell = (name, opts = {}) => {
+    const val = cs.getPropertyValue('--color-' + name).trim() || '(未定义)';
+    const cell = document.createElement('div');
+    cell.className = 'scale-cell';
+    cell.title = `--color-${name}\n${val}`;
+
+    const barStyle = opts.onWhite
+      ? `background-color:#fff;background-image:linear-gradient(var(--color-${name}, transparent), var(--color-${name}, transparent));`
+      : `background:var(--color-${name}, transparent);`;
+
+    const short = name.replace(/^primary-?/, '') || 'primary';
+    cell.innerHTML =
+      `<div class="bar" style="${barStyle}"></div>` +
+      `<div class="lbl" title="--color-${name}">${short}</div>`;
+    return cell;
+  };
+
+  const primEl  = document.getElementById('scale-primary');
+  const lightEl = document.getElementById('scale-light');
+  const darkEl  = document.getElementById('scale-dark');
+  const alphaEl = document.getElementById('scale-alpha');
+  const tbl     = document.getElementById('var-table');
+
+  if (primEl)  { primEl.innerHTML = '';  primEl.appendChild(makeCell('primary')); }
+  if (lightEl) { lightEl.innerHTML = ''; SCALE_LIGHT.forEach(n => lightEl.appendChild(makeCell(n))); }
+  if (darkEl)  { darkEl.innerHTML = '';  SCALE_DARK.forEach(n  => darkEl.appendChild(makeCell(n))); }
+  if (alphaEl) {
+    alphaEl.innerHTML = '';
+    SCALE_ALPHA.forEach(n => alphaEl.appendChild(makeCell(n, { onWhite: true })));
+  }
+
+  if (tbl){
+    tbl.innerHTML = '';
+    for (const n of VAR_LIST){
+      const val = cs.getPropertyValue('--color-' + n).trim() || '(未定义)';
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        `<td class="vn">--color-${n}</td>` +
+        `<td class="vs"><span class="var-chip" style="background:var(--color-${n}, transparent)"></span></td>` +
+        `<td class="vv">${val}</td>`;
+      tbl.appendChild(tr);
+    }
+  }
+}
+
+function updateStatus(){
+  const n = themes.size;
+  countEl.textContent = `${n} 个主题`;
+  countEl.classList.toggle('empty', n === 0);
+}
+
+let toastTimer = null;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* 事件 */
+selEl.addEventListener('change', e => applyTheme(e.target.value));
+document.getElementById('btn-files').addEventListener('click', () => document.getElementById('in-files').click());
+document.getElementById('btn-folder').addEventListener('click', () => document.getElementById('in-folder').click());
+document.getElementById('btn-clear').addEventListener('click', () => {
+  for (const e of registry.values()) if (e.url) URL.revokeObjectURL(e.url);
+  registry.clear(); themes.clear(); activeId = null;
+  linkEl.removeAttribute('href');
+  renderPicker(); updateStatus(); renderPalette(); renderScale();
+  toast('主题库已清空');
+});
+document.getElementById('in-files').addEventListener('change', e => { ingestFiles(e.target.files); e.target.value = ''; });
+document.getElementById('in-folder').addEventListener('change', e => { ingestFiles(e.target.files); e.target.value = ''; });
+
+/* ---------- 帮助面板 ---------- */
+const helpVeil = document.getElementById('help-veil');
+document.getElementById('btn-help').addEventListener('click', () => helpVeil.classList.add('open'));
+document.getElementById('help-close').addEventListener('click', () => helpVeil.classList.remove('open'));
+helpVeil.addEventListener('click', e => {
+  if (e.target === helpVeil) helpVeil.classList.remove('open');
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && helpVeil.classList.contains('open')){
+    helpVeil.classList.remove('open');
+  }
+});
+
+/* ---------- 拖拽 ---------- */
+let dragDepth = 0;
+window.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; document.body.classList.add('dragging'); });
+window.addEventListener('dragleave', e => { e.preventDefault(); dragDepth--; if (dragDepth <= 0){ dragDepth = 0; document.body.classList.remove('dragging'); }});
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', async e => {
+  e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
+  const items = e.dataTransfer?.items;
+  if (!items){ ingestFiles(e.dataTransfer?.files); return; }
+  const entries = [];
+  for (const it of items){
+    if (it.kind !== 'file') continue;
+    const entry = it.webkitGetAsEntry ? it.webkitGetAsEntry() : null;
+    if (entry) entries.push(entry);
+  }
+  if (!entries.length){ ingestFiles(e.dataTransfer.files); return; }
+  const files = [];
+  await Promise.all(entries.map(en => walkEntry(en, files, '')));
+  if (!files.length) toast('拖入的文件夹中没有 .css 文件');
+  else ingestFiles(files);
+});
+function walkEntry(entry, out, parentPath){
+  return new Promise(resolve => {
+    if (entry.isFile){
+      entry.file(
+        f => {
+          if (/\.css$/i.test(f.name)){
+            const rel = (parentPath ? parentPath + '/' : '') + f.name;
+            try {
+              Object.defineProperty(f, 'webkitRelativePath', {
+                value: rel, configurable: true, writable: false
+              });
+            } catch(err){}
+            out.push(f);
+          }
+          resolve();
+        },
+        () => resolve()
+      );
+    } else if (entry.isDirectory){
+      const reader = entry.createReader();
+      const batch = [];
+      const newParent = parentPath ? parentPath + '/' + entry.name : entry.name;
+      const next = () => reader.readEntries(
+        async ents => {
+          if (!ents.length){
+            await Promise.all(batch.map(x => walkEntry(x, out, newParent)));
+            resolve();
+          } else { batch.push(...ents); next(); }
+        },
+        () => resolve()
+      );
+      next();
+    } else resolve();
+  });
+}
+
+renderPicker(); updateStatus(); renderPalette(); renderScale();
+</script>
+</body>
+</html>
