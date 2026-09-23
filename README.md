@@ -22,7 +22,9 @@ English below | 一个纯前端单文件工具：加载本地 Gitea 主题 CSS �
 
 ## 🚀 使用方法
 
-双击 `gitea-theme-picker.html` 即可，无需服务器、无需安装。
+方式一（本地）：双击 `gitea-theme-picker.html` 即可，无需服务器、无需安装。
+
+方式二（在线体验）：[https://skyares.github.io/gitea-theme-picker/gitea-theme-picker.html](https://skyares.github.io/gitea-theme-picker/gitea-theme-picker.html)（GitHub Pages，主题文件同样只在你自己的浏览器里加载，不上传）。
 
 ## 📛 主题文件命名规则
 
@@ -85,6 +87,6 @@ Load your local Gitea theme CSS files (via file picker, folder picker or drag & 
 - Resolves `@import` dependencies (same directory first)
 - Built-in help panel with customization guide (add series, flavors, tint keywords …)
 
-Usage: just open `gitea-theme-picker.html` in your browser. Works with standard Gitea CSS variables (`--color-body`, `--color-primary`, `--color-nav-bg`, …).
+Usage: open `gitea-theme-picker.html` locally, or try it online: <https://skyares.github.io/gitea-theme-picker/gitea-theme-picker.html> (GitHub Pages; theme files are still loaded only in your own browser). Works with standard Gitea CSS variables (`--color-body`, `--color-primary`, `--color-nav-bg`, …).
 
 **Keywords**: gitea theme, gitea 主题, gitea css theme previewer, gitea custom theme, gitea theme tester, catppuccin gitea, 自托管 Git 主题预览
